@@ -8,16 +8,17 @@ This is lisper plugin. This vim plugin provide lisp environments for vimmers.
   You can call lisper#eval() to evaluate expression.
 
 ```vim
-echo lisper#eval('(+ 1 2 3 4 5)')
+:echo lisper#eval('(+ 1 2 3 4 5)')
+15
 ```
 
   Or, make instance permanently.
 
 ```vim
-let engine = lisper#engine()
-echo engine.eval("(+ 1 2 3 4 5)")
+:let engine = lisper#engine()
+:echo engine.eval("(+ 1 2 3 4 5)")
 15
-echo engine.eval("(+ 1 (length (quote abc))")
+:echo engine.eval("(+ 1 (length (quote abc))")
 4
 ```
 
