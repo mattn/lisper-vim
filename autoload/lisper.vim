@@ -253,7 +253,7 @@ function! lisper#repl()
     if len(exp) > 0
       try
         let ret = repl.eval(exp)
-        echo "=>" ret
+        echohl Constant | echo "=>" ret | echohl None
       catch /.../
         echo v:exception
       endtry
