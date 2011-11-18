@@ -51,6 +51,17 @@ function! s:make_op(f, ...)
   return function('s:op_f'.s:op_n)
 endfunction
 
+function! s:make_do(f, ...)
+  let s:op_n = get(s:, 'op_n', 0) + 1
+  let s:op_f{s:op_n}_ = a:f
+  let s:op_f{s:op_n}__ = a:000
+  function! s:op_f{s:op_n}(...)
+    let __ = eval(substitute(expand('<sfile>'), '^.*\zeop_f[0-9]\+$', 's:', '').'__')
+    exe eval(substitute(expand('<sfile>'), '^.*\zeop_f[0-9]\+$', 's:', '').'_')
+  endfunction
+  return function('s:op_f'.s:op_n)
+endfunction
+
 function! s:debug(...)
   echohl WarningMsg | echomsg string(a:000) | echohl None
   return a:000
@@ -101,10 +112,7 @@ function! s:parse(s)
 endfunction
 
 function! s:tokenize(s)
-  let s = a:s
-  let s = substitute(s, '(', ' ( ', 'g')
-  let s = substitute(s, ')', ' ) ', 'g')
-  let ss = split(s, '\zs')
+  let ss = split(a:s, '\zs')
   let [n, l] = [0, len(ss)]
   let r = []
   let m = {"t": "\t", "n": "\n", "r": "\r"}
@@ -136,7 +144,7 @@ function! s:tokenize(s)
       let b = ''
       while n < l
         let c = ss[n]
-        if c == ' '
+        if c == ' ' || c == ')'
           break
         endif
         let n += 1
@@ -212,13 +220,13 @@ function! lisper#stringer(v)
 endfunction
 
 function! s:deref(x)
-  let x = a:x
-  while type(x) == 4
-    let y = x['_']
-    unlet x
-    let x = y
+  let X = a:x
+  while type(X) == 4
+    let Y = X['_']
+    unlet X
+    let X = Y
   endwhile
-  return x
+  return X
 endfunction
 
 let s:lisp = {}
@@ -235,6 +243,12 @@ function! s:lisp._eval(...) dict abort
     if len(x) == 0
       return
     endif
+    while type(x[0]) == 3
+      let t = x[0]
+      unlet x
+      let x = t
+      unlet t
+    endwhile
     let m = s:deref(x[0])
     if m == 'quote' " (quote exp)
       let [_, exp] = x
@@ -267,6 +281,14 @@ function! s:lisp._eval(...) dict abort
         let val = self._eval(exp, env)
       endfor
       return val
+    elseif m == 'vim-eval'
+      let [_, exp] = x
+      let m = s:deref(exp)
+      return string(eval(m))
+    elseif m == 'vim-do'
+      let [_, exp] = x
+      let m = s:deref(exp)
+      return string(s:make_do(m)())
     else " (proc exp*)
       let exps = []
       for exp in x
@@ -292,7 +314,7 @@ function! lisper#engine()
   return engine
 endfunction
 
-function s:cut_vimprefix(e)
+function! s:cut_vimprefix(e)
   let e = a:e
   if e =~ '^Vim'
     let e = substitute(e, '^\S\+ ', '', '')
