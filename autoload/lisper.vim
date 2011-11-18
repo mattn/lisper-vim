@@ -94,7 +94,45 @@ function! s:tokenize(s)
   let s = a:s
   let s = substitute(s, '(', ' ( ', 'g')
   let s = substitute(s, ')', ' ) ', 'g')
-  return split(s, '\s\+')
+  let ss = split(s, '\zs')
+  let [n, l] = [0, len(ss)]
+  let r = []
+  while n < l
+    let c = ss[n]
+    if c == ' '
+      let n += 1
+    elseif c == '(' || c == ')'
+      call add(r, c)
+      let n += 1
+    elseif c == '"'
+      let b = c
+      let n += 1
+      while n < l
+        let c = ss[n]
+        if c == '"'
+          let b .= c
+          let n += 1
+          break
+        elseif c != '\'
+          let b .= c
+        endif
+        let n += 1
+      endwhile
+      call add(r, b)
+    else
+      let b = ''
+      while n < l
+        let c = ss[n]
+        if c == ' '
+          break
+        endif
+        let n += 1
+        let b .= c
+      endwhile
+      call add(r, b)
+    endif
+  endwhile
+  return r
 endfunction
 
 function! s:read_from(ctx)
@@ -131,9 +169,9 @@ function! s:atom(token)
     if a:token =~ '^\([+-]\?\)\%([0-9]\|\.[0-9]\)[0-9]*\(\.[0-9]*\)\?\([Ee]\([+-]\?[0-9]+\)\)\?$'
       return str2float(a:token)
     endif
-    "if a:token =~ '^\".*"$'
-    "  return eval(a:token)
-    "endif
+    if a:token =~ '^\".*"$'
+      return eval(a:token)
+    endif
   endif
   return { "_" : a:token }
 endfunction
@@ -239,7 +277,11 @@ function! lisper#eval(exp)
   try
     return engine.eval(a:exp)
   catch /.../
-    throw v:exception
+    let e = v:exception
+    if e =~ '^Vim'
+      let e = substitute(e, '^\S\+ ', '', '')
+    endif
+    throw e
   finally
     unlet engine
   endtry
