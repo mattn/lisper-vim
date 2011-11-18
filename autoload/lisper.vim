@@ -311,6 +311,13 @@ function! s:lisp._eval(...) dict abort
         unlet exp
       endfor
       return call('s:echo', exps)
+    elseif m == 'vim-call'
+      let exps = []
+      for exp in x[2:]
+        call add(exps, self._eval(exp, env))
+        unlet exp
+      endfor
+      return call(s:deref(x[1]), exps)
     elseif m == 'vim-eval'
       let exps = []
       for exp in x[2:]
