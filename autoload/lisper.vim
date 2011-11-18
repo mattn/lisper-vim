@@ -1,7 +1,7 @@
 "=============================================================================
 " lisper.vim
 " Author: Yasuhiro Matsumoto <mattn.jp@gmail.com>
-" Last Change: 17-Nov-2011.
+" Last Change: 18-Nov-2011.
 "
 " Based On: http://norvig.com/lis.py
 
@@ -126,10 +126,10 @@ function! s:atom(token)
     return a:token
   elseif t == 1
     if a:token =~ '^[+-]\?[0-9]\+$'
-      return a:token
+      return 0 + a:token
     endif
     if a:token =~ '^\([+-]\?\)\%([0-9]\|\.[0-9]\)[0-9]*\(\.[0-9]*\)\?\([Ee]\([+-]\?[0-9]+\)\)\?$'
-      return a:token
+      return 0.0 + a:token
     endif
     "if a:token =~ '^\".*"$'
     "  return eval(a:token)
