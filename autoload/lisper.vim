@@ -46,7 +46,7 @@ function! s:make_op(f, ...)
   let s:op_f{s:op_n}__ = a:000
   function! s:op_f{s:op_n}(...)
     let __ = eval(substitute(expand('<sfile>'), '^.*\zeop_f[0-9]\+$', 's:', '').'__')
-    return eval(eval(substitute(expand('<sfile>'), '^.*\zeop_f[0-9]\+$', 's:', '').'_'))
+    return eval(substitute(eval(substitute(expand('<sfile>'), '^.*\zeop_f[0-9]\+$', 's:', '').'_'), '\n', '', 'g'))
   endfunction
   return function('s:op_f'.s:op_n)
 endfunction
@@ -60,6 +60,11 @@ function! s:make_do(f, ...)
     exe eval(substitute(expand('<sfile>'), '^.*\zeop_f[0-9]\+$', 's:', '').'_')
   endfunction
   return function('s:op_f'.s:op_n)
+endfunction
+
+function! s:echo(...)
+  echo a:000
+  return a:000
 endfunction
 
 function! s:debug(...)
@@ -296,12 +301,23 @@ function! s:lisp._eval(...) dict abort
       for exp in x[1:]
         silent! unlet val
         let val = self._eval(exp, env)
+        unlet exp
       endfor
       return val
+    elseif m == 'vim-echo'
+      let exps = []
+      for exp in x[1:]
+        call add(exps, self._eval(exp, env))
+        unlet exp
+      endfor
+      return call('s:echo', exps)
     elseif m == 'vim-eval'
-      let [_, exp] = x
-      let m = s:deref(exp)
-      return string(eval(m))
+      let exps = []
+      for exp in x[2:]
+        call add(exps, self._eval(exp, env))
+        unlet exp
+      endfor
+      return call(s:make_op(s:deref(x[1])), exps)
     elseif m == 'vim-do'
       let exps = []
       for exp in x[2:]
@@ -344,13 +360,13 @@ endfunction
 
 function! lisper#eval(exp)
   let engine = lisper#engine()
-  try
+"  try
     return engine.eval(a:exp)
-  catch /.../
-    throw s:cut_vimprefix(v:exception)
-  finally
-    unlet engine
-  endtry
+"  catch /.../
+"    throw s:cut_vimprefix(v:exception)
+"  finally
+"    unlet engine
+"  endtry
 endfunction
 
 function! lisper#repl()
