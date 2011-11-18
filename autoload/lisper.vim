@@ -63,7 +63,7 @@ function! s:make_do(f, ...)
 endfunction
 
 function! s:echo(...)
-  echo a:000
+  echo join(a:000, ' ')
   return a:000
 endfunction
 
@@ -107,6 +107,7 @@ function! s:add_globals(env)
 \ 'atan2':   s:make_op('atan2(s:deref(a:1), s:deref(a:2))'),
 \ '#t':      !0,
 \ '#f':      0,
+\ 'nil':     0,
 \})
   return env
 endfunction
@@ -196,9 +197,9 @@ function! s:read_from(ctx)
       throw 'unexpected EOF while reading'
     endif
     let a:ctx.tokens = a:ctx.tokens[1:]
-    if len(l) > 0 && len(a:ctx.tokens) > 0
-      let l += s:read_from(a:ctx)
-    endif
+    "if len(l) > 0 && len(a:ctx.tokens) > 0
+    "  let l += s:read_from(a:ctx)
+    "endif
     return l
   elseif ')' == token
     throw 'unexpected )'
@@ -294,7 +295,8 @@ function! s:lisp._eval(...) dict abort
       let [_, exp; rest] = x
       return exp
     elseif m == 'if' " (if test conseq alt)
-      let [_, test, conseq, alt; rest] = x
+      let [_, test, conseq; rest] = x
+      let alt = len(rest) > 0 ? rest[0] : 0
       if self._eval(test, env)
         return self._eval(conseq, env)
       else
@@ -312,13 +314,33 @@ function! s:lisp._eval(...) dict abort
       let m = s:deref(var)
       let env.bind[m] = self._eval(exp, env)
       return env.bind[m]
+    elseif m == 'return' " (return exp)
+      let env['_lisper_loop_'] = 0
+      return len(x) > 1 ? self._eval(x[1], env) : 0
+    elseif m == 'loop' " (loop exp*)
+      let oldloop = get(env, '_lisper_loop_', 0)
+      while 1
+        for exp in x[1:]
+          silent! unlet V
+          let env['_lisper_loop_'] = 1
+          let V = self._eval(exp, env)
+          if env['_lisper_loop_'] == 0
+            let env['_lisper_loop_'] = oldloop
+            return V
+          endif
+          unlet exp
+        endfor
+      endwhile
     elseif m == 'lambda' " (lambda (var*) exp)
       let [_, vars, exp; rest] = x
       return {'_lisper_symbol_': s:make_op('__[0]._eval(__[1], s:env.new(__[2], a:000, __[3]))', self, exp, vars, env)}
     elseif m == 'begin' " (begin exp*)
+      let V = 0
       for exp in x[1:]
+        silent! unlet VV
+        let VV = self._eval(exp, env)
         silent! unlet V
-        let V = self._eval(exp, env)
+        let V = VV
         unlet exp
       endfor
       return V
@@ -328,7 +350,8 @@ function! s:lisp._eval(...) dict abort
         call add(exps, self._eval(exp, env))
         unlet exp
       endfor
-      return call('s:echo', exps)
+      call call('s:echo', exps)
+      return ''
     elseif m == 'vim-call'
       let exps = []
       for exp in x[2:]
