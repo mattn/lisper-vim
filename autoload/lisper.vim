@@ -283,16 +283,20 @@ function! lisper#engine()
   return engine
 endfunction
 
+function s:cut_vimprefix(e)
+  let e = a:e
+  if e =~ '^Vim'
+    let e = substitute(e, '^\S\+ ', '', '')
+  endif
+  return e
+endfunction
+
 function! lisper#eval(exp)
   let engine = lisper#engine()
   try
     return engine.eval(a:exp)
   catch /.../
-    let e = v:exception
-    if e =~ '^Vim'
-      let e = substitute(e, '^\S\+ ', '', '')
-    endif
-    throw e
+    throw s:cut_vimprefix(v:exception)
   finally
     unlet engine
   endtry
@@ -300,16 +304,22 @@ endfunction
 
 function! lisper#repl()
   let repl = lisper#engine()
-  while 1
-    let exp = input("lisp> ")
-    echo "\n"
-    if len(exp) > 0
-      try
-        let ret = repl.eval(exp)
-        echohl Constant | echo "=>" ret | echohl None
-      catch /.../
-        echo v:exception
-      endtry
-    endif
-  endwhile
+  let oldmore = &more
+  set nomore
+  try
+    while 1
+      let exp = input("lisp> ")
+      echo "\n"
+      if len(exp) > 0
+        try
+          let ret = repl.eval(exp)
+          echohl Constant | echo "=>" ret | echohl None
+        catch /.../
+          echohl WarningMsg | echo s:cut_vimprefix(v:exception) | echohl None
+        endtry
+      endif
+    endwhile
+  finally
+    let &more = oldmore
+  endtry
 endfunction
