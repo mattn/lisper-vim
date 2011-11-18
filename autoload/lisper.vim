@@ -273,30 +273,30 @@ function! s:lisp._eval(...) dict abort
     endwhile
     let m = s:deref(x[0])
     if m == 'quote' " (quote exp)
-      let [_, exp] = x
+      let [_, exp; rest] = x
       return exp
     elseif m == 'if' " (if test conseq alt)
-      let [_, test, conseq, alt] = x
+      let [_, test, conseq, alt; rest] = x
       if self._eval(test, env)
         return self._eval(conseq, env)
       else
         return self._eval(alt, env)
       endif
     elseif m == 'set!' " (set! var exp)
-      let [_, var, exp] = x
+      let [_, var, exp; rest] = x
       let m = s:deref(var)
       let vars = env.find(m, 1)
       let vars[m] = self._eval(exp, env)
       return m
     elseif m == 'define' " (define var exp)
-      let [_, var, exp] = x
+      let [_, var, exp; rest] = x
       unlet m
       let m = s:deref(var)
       let env.bind[m] = self._eval(exp, env)
       return env.bind[m]
     elseif m == 'lambda' " (lambda (var*) exp)
-      let [_, vars, exp] = x
-      return {'_lisper_symbol_': s:make_op('__[0]._eval(__[1], s:env.new(__[2], a:000, __[3]))', self, exp, vars, env) }
+      let [_, vars, exp; rest] = x
+      return {'_lisper_symbol_': s:make_op('__[0]._eval(__[1], s:env.new(__[2], a:000, __[3]))', self, exp, vars, env)}
     elseif m == 'begin' " (begin exp*)
       for exp in x[1:]
         silent! unlet V
