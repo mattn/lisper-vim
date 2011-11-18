@@ -73,7 +73,7 @@ function! s:add_globals(env)
 \ 'equal?':  s:make_op('(s:deref(a:1) ==# s:deref(a:2))'),
 \ 'eq?':     s:make_op('(s:deref(a:1) is# s:deref(a:2))'),
 \ 'length':  s:make_op('len(s:deref(a:1))'),
-\ 'cons':    s:make_op('s:deref(a:1).s:deref(a:2)'),
+\ 'cons':    s:make_op('eval(join(map(range(a:0), ''"s:deref(a:".(v:val+1).")"''), ''.''))'),
 \ 'car':     s:make_op('s:deref(a:1)[0]'),
 \ 'cdr':     s:make_op('s:deref(a:1)[1:]'),
 \ 'append':  s:make_op('eval(join(map(map(copy(a:000), ''type(v:val)==3?v:val :[v:val]''), ''s:deref(v:val)''), ''+''))'),
