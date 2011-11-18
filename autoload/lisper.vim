@@ -1,7 +1,7 @@
 "=============================================================================
 " lisper.vim
 " Author: Yasuhiro Matsumoto <mattn.jp@gmail.com>
-" Last Change: 18-Nov-2011.
+" Last Change: 19-Nov-2011.
 "
 " Based On: http://norvig.com/lis.py
 
@@ -400,8 +400,8 @@ endfunction
 
 function! s:cut_vimprefix(e)
   let e = a:e
-  if e =~ '^Vim'
-    let e = substitute(e, '^\S\+ ', '', '')
+  if e =~ '^Vim:'
+    let e = substitute(e, '^Vim:', '', '')
   endif
   return e
 endfunction
