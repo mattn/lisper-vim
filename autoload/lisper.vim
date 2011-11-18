@@ -129,7 +129,7 @@ function! s:atom(token)
       return 0 + a:token
     endif
     if a:token =~ '^\([+-]\?\)\%([0-9]\|\.[0-9]\)[0-9]*\(\.[0-9]*\)\?\([Ee]\([+-]\?[0-9]+\)\)\?$'
-      return 0.0 + a:token
+      return str2float(a:token)
     endif
     "if a:token =~ '^\".*"$'
     "  return eval(a:token)
