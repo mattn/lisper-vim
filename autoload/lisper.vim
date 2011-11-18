@@ -157,7 +157,7 @@ function! s:tokenize(s)
       let b = ''
       while n < l
         let c = ss[n]
-        if c =~ '[\r\n\t ]' || c == ')'
+        if c =~ '[\r\n\t ()]'
           break
         endif
         let n += 1
@@ -367,13 +367,13 @@ endfunction
 
 function! lisper#eval(exp)
   let engine = lisper#engine()
-"  try
+  try
     return engine.eval(a:exp)
-"  catch /.../
-"    throw s:cut_vimprefix(v:exception)
-"  finally
-"    unlet engine
-"  endtry
+  catch /.../
+    throw s:cut_vimprefix(v:exception)
+  finally
+    unlet engine
+  endtry
 endfunction
 
 function! lisper#repl()
