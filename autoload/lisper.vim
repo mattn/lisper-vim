@@ -299,11 +299,11 @@ function! s:lisp._eval(...) dict abort
       return {'_lisper_symbol_': s:make_op('__[0]._eval(__[1], s:env.new(__[2], a:000, __[3]))', self, exp, vars, env) }
     elseif m == 'begin' " (begin exp*)
       for exp in x[1:]
-        silent! unlet val
-        let val = self._eval(exp, env)
+        silent! unlet V
+        let V = self._eval(exp, env)
         unlet exp
       endfor
-      return val
+      return V
     elseif m == 'vim-echo'
       let exps = []
       for exp in x[1:]
