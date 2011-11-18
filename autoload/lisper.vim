@@ -89,6 +89,8 @@ function! s:add_globals(env)
 \ 'acos':    s:make_op('acos(s:deref(a:1))'),
 \ 'atan':    s:make_op('atan(s:deref(a:1))'),
 \ 'atan2':   s:make_op('atan2(s:deref(a:1), s:deref(a:2))'),
+\ '#t':      !0,
+\ '#f':      0,
 \})
   return env
 endfunction
@@ -210,7 +212,13 @@ function! lisper#stringer(v)
 endfunction
 
 function! s:deref(x)
-  return type(a:x) == 4 ? a:x['_'] : a:x
+  let x = a:x
+  while type(x) == 4
+    let y = x['_']
+    unlet x
+    let x = y
+  endwhile
+  return x
 endfunction
 
 let s:lisp = {}
@@ -246,6 +254,7 @@ function! s:lisp._eval(...) dict abort
       return m
     elseif m == 'define' " (define var exp)
       let [_, var, exp] = x
+      unlet m
       let m = s:deref(var)
       let env.bind[m] = self._eval(exp, env)
       return env.bind[m]
