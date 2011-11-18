@@ -14,7 +14,7 @@ function! s:env.new(...)
   let f = 0
   while f < len(params)
     let p = params[f]
-    let m = type(p) == 4 ? p['_'] : p
+    let m = s:deref(p)
     let self.bind[m] = args[f]
     let f += 1
   endwhile
@@ -28,7 +28,7 @@ function! s:env.find(...) dict
   if is_set || has_key(self.bind, var)
     return self.bind
   endif
-  if !empty(self.outer) 
+  if !empty(self.outer)
     return self.outer.find(var)
   endif
   throw "Not found symbol `".var."`"
@@ -118,7 +118,7 @@ function! s:tokenize(s)
   let m = {"t": "\t", "n": "\n", "r": "\r"}
   while n < l
     let c = ss[n]
-    if c == ' '
+    if c =~ '[\r\n\t ]'
       let n += 1
     elseif c == '(' || c == ')'
       call add(r, c)
@@ -140,11 +140,19 @@ function! s:tokenize(s)
         let n += 1
       endwhile
       call add(r, b)
+    elseif c == ';'
+      while n < l
+        let c = ss[n]
+        let n += 1
+        if c == "\n"
+          break
+        endif
+      endwhile
     else
       let b = ''
       while n < l
         let c = ss[n]
-        if c == ' ' || c == ')'
+        if c =~ '[\r\n\t ]' || c == ')'
           break
         endif
         let n += 1
@@ -194,7 +202,7 @@ function! s:atom(token)
       return eval(a:token)
     endif
   endif
-  return { "_" : a:token }
+  return {'_lisper_symbol_': a:token}
 endfunction
 
 function! lisper#stringer(v)
@@ -202,7 +210,10 @@ function! lisper#stringer(v)
   if t == 0 || t == 1 || t == 5
     return a:v
   elseif t == 4
-    return lisper#stringer(a:v['_'])
+    if has_key(a:v, '_lisper_symbol_')
+      return lisper#stringer(a:v['_lisper_symbol_'])
+    endif
+    return string(a:v)
   elseif t == 3
     let s = '('
     for V in a:v
@@ -222,7 +233,10 @@ endfunction
 function! s:deref(x)
   let X = a:x
   while type(X) == 4
-    let Y = X['_']
+    if !has_key(X, '_lisper_symbol_')
+      return X
+    endif
+    let Y = X['_lisper_symbol_']
     unlet X
     let X = Y
   endwhile
@@ -235,7 +249,10 @@ function! s:lisp._eval(...) dict abort
   let x = a:1
   let env = a:0 > 1 ? a:2 : self.global_env
   if type(x) == 4 " symbol
-    let s = x['_']
+    let s = s:deref(x)
+    if type(s) == 4
+      return s
+    endif
     return env.find(s)[s]
   elseif type(x) != 3 " constant
     return x
@@ -274,7 +291,7 @@ function! s:lisp._eval(...) dict abort
       return env.bind[m]
     elseif m == 'lambda' " (lambda (var*) exp)
       let [_, vars, exp] = x
-      return {"_": s:make_op('__[0]._eval(__[1], s:env.new(__[2], a:000, __[3]))', self, exp, vars, env) }
+      return {'_lisper_symbol_': s:make_op('__[0]._eval(__[1], s:env.new(__[2], a:000, __[3]))', self, exp, vars, env) }
     elseif m == 'begin' " (begin exp*)
       for exp in x[1:]
         silent! unlet val
@@ -286,13 +303,16 @@ function! s:lisp._eval(...) dict abort
       let m = s:deref(exp)
       return string(eval(m))
     elseif m == 'vim-do'
-      let [_, exp] = x
-      let m = s:deref(exp)
-      return string(s:make_do(m)())
+      let exps = []
+      for exp in x[2:]
+        call add(exps, self._eval(exp, env))
+        unlet exp
+      endfor
+      return call(s:make_do(s:deref(x[1])), exps)
     else " (proc exp*)
       let exps = []
       for exp in x
-        call add(exps, self._eval(exp, env)) 
+        call add(exps, self._eval(exp, env))
         unlet exp
       endfor
       return call(s:deref(exps[0]), exps[1:])
