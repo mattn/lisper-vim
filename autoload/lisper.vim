@@ -112,8 +112,20 @@ function! s:add_globals(env)
 endfunction
 
 function! s:parse(s)
-  let ctx = { "tokens": s:tokenize(a:s) }
+  let ctx = {"tokens": s:tokenize(a:s)}
   return s:read_from(ctx)
+endfunction
+
+function! s:can(r)
+  let b = 0
+  for s in a:r
+    if s == '('
+      let b += 1
+    elseif s == ')'
+      let b -= 1
+    endif
+  endfor
+  return b
 endfunction
 
 function! s:tokenize(s)
@@ -177,13 +189,16 @@ function! s:read_from(ctx)
   let a:ctx.tokens = a:ctx.tokens[1:]
   if '(' == token
     let l = []
-    while len(a:ctx.tokens) && a:ctx.tokens[0] != ')'
+    while len(a:ctx.tokens) > 0 && a:ctx.tokens[0] != ')'
       call add(l, s:read_from(a:ctx))
     endwhile
     if len(a:ctx.tokens) == 0
       throw 'unexpected EOF while reading'
     endif
     let a:ctx.tokens = a:ctx.tokens[1:]
+    if len(l) > 0 && len(a:ctx.tokens) > 0
+      let l += s:read_from(a:ctx)
+    endif
     return l
   elseif ')' == token
     throw 'unexpected )'
@@ -265,12 +280,15 @@ function! s:lisp._eval(...) dict abort
     if len(x) == 0
       return
     endif
-    while type(x[0]) == 3
+    while type(x[0]) == 3 && len(x[0])
       let t = x[0]
       unlet x
       let x = t
       unlet t
     endwhile
+    if len(x[0]) == 0
+      return 0
+    endif
     let m = s:deref(x[0])
     if m == 'quote' " (quote exp)
       let [_, exp; rest] = x
@@ -380,16 +398,27 @@ function! lisper#repl()
   let repl = lisper#engine()
   let oldmore = &more
   set nomore
+  let exp = ''
+  let nest = 0
   try
     while 1
-      let exp = input("lisp> ")
+      let exp .= input("lisp".repeat(">", nest+1)." ")
       echo "\n"
       if len(exp) > 0
+        let tokens = []
         try
-          let ret = repl.eval(exp)
+          let tokens = s:tokenize(exp)
+          let ret = lisper#stringer(repl._eval(s:read_from({"tokens": tokens})))
           echohl Constant | echo "=>" ret | echohl None
+          let exp = ''
+          let nest = 0
         catch /.../
-          echohl WarningMsg | echo s:cut_vimprefix(v:exception) | echohl None
+          if v:exception != 'unexpected EOF while reading'
+            let exp = ''
+            echohl WarningMsg | echo s:cut_vimprefix(v:exception) | echohl None
+          else
+            let nest = s:can(tokens)
+          endif
         endtry
       endif
     endwhile
@@ -397,3 +426,5 @@ function! lisper#repl()
     let &more = oldmore
   endtry
 endfunction
+
+" vim:set et:
