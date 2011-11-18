@@ -105,6 +105,7 @@ function! s:tokenize(s)
   let ss = split(s, '\zs')
   let [n, l] = [0, len(ss)]
   let r = []
+  let m = {"t": "\t", "n": "\n", "r": "\r"}
   while n < l
     let c = ss[n]
     if c == ' '
@@ -123,6 +124,8 @@ function! s:tokenize(s)
           break
         elseif c != '\'
           let b .= c
+        elseif n < l - 1 && has_key(m, c)
+          let b .= m[c]
         endif
         let n += 1
       endwhile

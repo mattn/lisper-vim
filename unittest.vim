@@ -2,11 +2,20 @@ scriptencoding utf-8
 
 let s:engine = lisper#engine()
 
+function! s:ss(s)
+  let s = string(a:s)
+  let s = substitute(s, '\n', '\\n', 'g')
+  let s = substitute(s, '\r', '\\r', 'g')
+  let s = substitute(s, '\t', '\\t', 'g')
+  let s = substitute(s, "''", "'", 'g')
+  return s[1:-2]
+endfunction
+
 function! s:test_equal(lhs, rhs) abort
   let ret = s:engine.eval(a:lhs)
-  echo a:lhs "=>" ret
+  echo s:ss(a:lhs) "=>" s:ss(ret)
   if ret !=# a:rhs
-    throw "failed: expected =>".a:rhs
+    throw "failed: expected =>".s.ss(a:rhs)
   endif
 endfunction
 
@@ -54,7 +63,7 @@ call s:test_equal("var", "lispl")
 call s:test_lambda("(define myadd (lambda (a b) (+ a b)))")
 call s:test_equal("(myadd 10 20)", "30")
 call s:test_equal("(begin (define mylist (lambda (a) (list var a))) (mylist var))", "(lispl lispl)")
-call s:test_equal("(cons \"hello\" \",こんにちわ\" \"世界\")", "hello,こんにちわ世界")
+call s:test_equal("(cons \"hello\t\" \",こんにちわ\" \"\n世界\")", "hello\t,こんにちわ\n世界")
 call s:test_equal("(sin 0.3)", sin(0.3))
 call s:test_equal("(cos 0.4)", cos(0.4))
 call s:test_equal("(tan 0.5)", tan(0.5))
