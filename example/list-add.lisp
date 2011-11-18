@@ -7,3 +7,5 @@
   (list-add l 6)
   (list-map l "'foo'.v:val")
 )
+
+;; vim: set ft=lisp:
