@@ -81,6 +81,14 @@ function! s:add_globals(env)
 \ 'list?':   s:make_op('type(s:deref(a:1))==3'),
 \ 'null?':   s:make_op('len(s:deref(a:1)) == 0'),
 \ 'symbol?': s:make_op('type(a:1) == 4'),
+\ 'abs':     s:make_op('abs(s:deref(a:1))'),
+\ 'sin':     s:make_op('sin(s:deref(a:1))'),
+\ 'cos':     s:make_op('cos(s:deref(a:1))'),
+\ 'tan':     s:make_op('tan(s:deref(a:1))'),
+\ 'asin':    s:make_op('asin(s:deref(a:1))'),
+\ 'acos':    s:make_op('acos(s:deref(a:1))'),
+\ 'atan':    s:make_op('atan(s:deref(a:1))'),
+\ 'atan2':   s:make_op('atan2(s:deref(a:1), s:deref(a:2))'),
 \})
   return env
 endfunction

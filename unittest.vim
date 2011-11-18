@@ -1,3 +1,5 @@
+scriptencoding utf-8
+
 let s:engine = lisper#engine()
 
 function! s:test_equal(lhs, rhs) abort
@@ -52,5 +54,13 @@ call s:test_equal("var", "lispl")
 call s:test_lambda("(define myadd (lambda (a b) (+ a b)))")
 call s:test_equal("(myadd 10 20)", "30")
 call s:test_equal("(begin (define mylist (lambda (a) (list var a))) (mylist var))", "(lispl lispl)")
+call s:test_equal("(cons \"hello\" \"世界\")", "hello世界")
+call s:test_equal("(sin 0.3)", sin(0.3))
+call s:test_equal("(cos 0.4)", cos(0.4))
+call s:test_equal("(tan 0.5)", tan(0.5))
+call s:test_equal("(asin 0.6)", asin(0.6))
+call s:test_equal("(acos 0.7)", acos(0.7))
+call s:test_equal("(atan 0.8)", atan(0.8))
+call s:test_equal("(atan2 0.8 0.9)", atan2(0.8, 0.9))
 
 " vi:set ts=8 sts=2 sw=2 tw=0:
