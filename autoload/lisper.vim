@@ -5,7 +5,7 @@
 "
 " Based On: http://norvig.com/lis.py
 
-let s:env = { "bind" : {} }
+let s:env = { "bind": {}, "lambda": [] }
 
 function! s:env.new(...)
   let params = a:0 > 0 ? a:000[0] : []
@@ -40,7 +40,7 @@ function! s:env.update(var) dict
   endfor
 endfunction
 
-function! s:make_op(f, ...)
+function! s:env.make_op(f, ...) dict
   let s:op_n = get(s:, 'op_n', 0) + 1
   let s:op_f{s:op_n}_ = a:f
   let s:op_f{s:op_n}__ = a:000
@@ -48,10 +48,11 @@ function! s:make_op(f, ...)
     let __ = eval(substitute(expand('<sfile>'), '^.*\zeop_f[0-9]\+$', 's:', '').'__')
     return eval(substitute(eval(substitute(expand('<sfile>'), '^.*\zeop_f[0-9]\+$', 's:', '').'_'), '\n', '', 'g'))
   endfunction
+  call add(self.lambda, 's:op_f'.s:op_n)
   return function('s:op_f'.s:op_n)
 endfunction
 
-function! s:make_do(f, ...)
+function! s:env.make_do(f, ...) dict
   let s:op_n = get(s:, 'op_n', 0) + 1
   let s:op_f{s:op_n}_ = a:f
   let s:op_f{s:op_n}__ = a:000
@@ -59,6 +60,7 @@ function! s:make_do(f, ...)
     let __ = eval(substitute(expand('<sfile>'), '^.*\zeop_f[0-9]\+$', 's:', '').'__')
     exe eval(substitute(expand('<sfile>'), '^.*\zeop_f[0-9]\+$', 's:', '').'_')
   endfunction
+  call add(self.lambda, 's:op_f'.s:op_n)
   return function('s:op_f'.s:op_n)
 endfunction
 
@@ -76,35 +78,35 @@ function! s:add_globals(env)
   "env.update(vars(math)) # sin, sqrt, ...
   let env = a:env
   call env.update({
-\ '+':       s:make_op('eval(join(map(range(a:0), ''"s:deref(a:".(v:val+1).")"''), ''+''))'),
-\ '-':       s:make_op('eval(join(map(range(a:0), ''"s:deref(a:".(v:val+1).")"''), ''-''))'),
-\ '*':       s:make_op('eval(join(map(range(a:0), ''"s:deref(a:".(v:val+1).")"''), ''*''))'),
-\ '/':       s:make_op('eval(join(map(range(a:0), ''"s:deref(a:".(v:val+1).")"''), ''/''))'),
-\ 'not':     s:make_op('!s:deref(a:1)'),
-\ '>':       s:make_op('(s:deref(a:1) > s:deref(a:2))'),
-\ '<':       s:make_op('(s:deref(a:1) < s:deref(a:2))'),
-\ '>=':      s:make_op('(s:deref(a:1) >= s:deref(a:2))'),
-\ '<=':      s:make_op('(s:deref(a:1) <= s:deref(a:2))'),
-\ '=':       s:make_op('(s:deref(a:1) == s:deref(a:2))'),
-\ 'equal?':  s:make_op('(s:deref(a:1) ==# s:deref(a:2))'),
-\ 'eq?':     s:make_op('(s:deref(a:1) is# s:deref(a:2))'),
-\ 'length':  s:make_op('len(s:deref(a:1))'),
-\ 'cons':    s:make_op('eval(join(map(range(a:0), ''"s:deref(a:".(v:val+1).")"''), ''.''))'),
-\ 'car':     s:make_op('s:deref(a:1)[0]'),
-\ 'cdr':     s:make_op('s:deref(a:1)[1:]'),
-\ 'append':  s:make_op('eval(join(map(map(copy(a:000), ''type(v:val)==3?v:val :[v:val]''), ''s:deref(v:val)''), ''+''))'),
-\ 'list':    s:make_op('map(copy(a:000), ''s:deref(v:val)'')'),
-\ 'list?':   s:make_op('type(s:deref(a:1))==3'),
-\ 'null?':   s:make_op('len(s:deref(a:1)) == 0'),
-\ 'symbol?': s:make_op('type(a:1) == 4'),
-\ 'abs':     s:make_op('abs(s:deref(a:1))'),
-\ 'sin':     s:make_op('sin(s:deref(a:1))'),
-\ 'cos':     s:make_op('cos(s:deref(a:1))'),
-\ 'tan':     s:make_op('tan(s:deref(a:1))'),
-\ 'asin':    s:make_op('asin(s:deref(a:1))'),
-\ 'acos':    s:make_op('acos(s:deref(a:1))'),
-\ 'atan':    s:make_op('atan(s:deref(a:1))'),
-\ 'atan2':   s:make_op('atan2(s:deref(a:1), s:deref(a:2))'),
+\ '+':       env.make_op('eval(join(map(range(a:0), ''"s:deref(a:".(v:val+1).")"''), ''+''))'),
+\ '-':       env.make_op('eval(join(map(range(a:0), ''"s:deref(a:".(v:val+1).")"''), ''-''))'),
+\ '*':       env.make_op('eval(join(map(range(a:0), ''"s:deref(a:".(v:val+1).")"''), ''*''))'),
+\ '/':       env.make_op('eval(join(map(range(a:0), ''"s:deref(a:".(v:val+1).")"''), ''/''))'),
+\ 'not':     env.make_op('!s:deref(a:1)'),
+\ '>':       env.make_op('(s:deref(a:1) > s:deref(a:2))'),
+\ '<':       env.make_op('(s:deref(a:1) < s:deref(a:2))'),
+\ '>=':      env.make_op('(s:deref(a:1) >= s:deref(a:2))'),
+\ '<=':      env.make_op('(s:deref(a:1) <= s:deref(a:2))'),
+\ '=':       env.make_op('(s:deref(a:1) == s:deref(a:2))'),
+\ 'equal?':  env.make_op('(s:deref(a:1) ==# s:deref(a:2))'),
+\ 'eq?':     env.make_op('(s:deref(a:1) is# s:deref(a:2))'),
+\ 'length':  env.make_op('len(s:deref(a:1))'),
+\ 'cons':    env.make_op('eval(join(map(range(a:0), ''"s:deref(a:".(v:val+1).")"''), ''.''))'),
+\ 'car':     env.make_op('s:deref(a:1)[0]'),
+\ 'cdr':     env.make_op('s:deref(a:1)[1:]'),
+\ 'append':  env.make_op('eval(join(map(map(copy(a:000), ''type(v:val)==3?v:val :[v:val]''), ''s:deref(v:val)''), ''+''))'),
+\ 'list':    env.make_op('map(copy(a:000), ''s:deref(v:val)'')'),
+\ 'list?':   env.make_op('type(s:deref(a:1))==3'),
+\ 'null?':   env.make_op('len(s:deref(a:1)) == 0'),
+\ 'symbol?': env.make_op('type(a:1) == 4'),
+\ 'abs':     env.make_op('abs(s:deref(a:1))'),
+\ 'sin':     env.make_op('sin(s:deref(a:1))'),
+\ 'cos':     env.make_op('cos(s:deref(a:1))'),
+\ 'tan':     env.make_op('tan(s:deref(a:1))'),
+\ 'asin':    env.make_op('asin(s:deref(a:1))'),
+\ 'acos':    env.make_op('acos(s:deref(a:1))'),
+\ 'atan':    env.make_op('atan(s:deref(a:1))'),
+\ 'atan2':   env.make_op('atan2(s:deref(a:1), s:deref(a:2))'),
 \ '#t':      !0,
 \ '#f':      0,
 \ 'nil':     0,
@@ -266,6 +268,14 @@ endfunction
 
 let s:lisp = {}
 
+function! s:lisp.dispose() dict
+  for X in self.global_env.lambda
+    exe "delfunction" X
+    unlet X
+  endfor
+  let self.global_env = {}
+endfunction
+
 function! s:lisp._eval(...) dict abort
   let x = a:1
   let env = a:0 > 1 ? a:2 : self.global_env
@@ -333,7 +343,7 @@ function! s:lisp._eval(...) dict abort
       endwhile
     elseif m == 'lambda' " (lambda (var*) exp)
       let [_, vars, exp; rest] = x
-      return {'_lisper_symbol_': s:make_op('__[0]._eval(__[1], s:env.new(__[2], a:000, __[3]))', self, exp, vars, env)}
+      return {'_lisper_symbol_': env.make_op('__[0]._eval(__[1], s:env.new(__[2], a:000, __[3]))', self, exp, vars, env)}
     elseif m == 'begin' " (begin exp*)
       let V = 0
       for exp in x[1:]
@@ -365,14 +375,14 @@ function! s:lisp._eval(...) dict abort
         call add(exps, self._eval(exp, env))
         unlet exp
       endfor
-      return call(s:make_op(s:deref(x[1])), exps)
+      return call(env.make_op(s:deref(x[1])), exps)
     elseif m == 'vim-do'
       let exps = []
       for exp in x[2:]
         call add(exps, self._eval(exp, env))
         unlet exp
       endfor
-      return call(s:make_do(s:deref(x[1])), exps)
+      return call(env.make_do(s:deref(x[1])), exps)
     else " (proc exp*)
       let exps = []
       for exp in x
@@ -400,8 +410,8 @@ endfunction
 
 function! s:cut_vimprefix(e)
   let e = a:e
-  if e =~ '^Vim:'
-    let e = substitute(e, '^Vim:', '', '')
+  if e =~ '^Vim'
+    let e = substitute(e, '^Vim[^:]*:', '', '')
   endif
   return e
 endfunction
@@ -413,6 +423,7 @@ function! lisper#eval(exp)
   catch /.../
     throw s:cut_vimprefix(v:exception)
   finally
+    call engine.dispose()
     unlet engine
   endtry
 endfunction
@@ -447,6 +458,8 @@ function! lisper#repl()
     endwhile
   finally
     let &more = oldmore
+    call repl.dispose()
+    unlet repl
   endtry
 endfunction
 
