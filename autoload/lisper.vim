@@ -107,6 +107,7 @@ function! s:add_globals(env)
 \ 'acos':    env.make_op('acos(s:deref(a:1))'),
 \ 'atan':    env.make_op('atan(s:deref(a:1))'),
 \ 'atan2':   env.make_op('atan2(s:deref(a:1), s:deref(a:2))'),
+\ 'mod':     env.make_op('s:deref(a:1) % s:deref(a:2)'),
 \ '#t':      !0,
 \ '#f':      0,
 \ 'nil':     0,
