@@ -29,7 +29,7 @@ This is lisper plugin. This vim plugin provide lisp environments for vimmers.
   You can run eval point loop in vim command-line.
 
 ```vim
-:LisperLipl
+:LisperRepl
 ```
 
 ```vim
