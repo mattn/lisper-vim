@@ -1,7 +1,7 @@
 "=============================================================================
 " lisper.vim
 " Author: Yasuhiro Matsumoto <mattn.jp@gmail.com>
-" Last Change: 19-Nov-2011.
+" Last Change: 21-Nov-2011.
 "
 " Based On: http://norvig.com/lis.py
 
@@ -74,6 +74,52 @@ function! s:debug(...)
   return a:000
 endfunction
 
+function! s:or(...)
+  let a = []
+  for v in a:000
+    let r = ""
+    while v > 0
+      let i = v % 2
+      let r = i . r
+      let v = v / 2
+    endwhile
+    call add(a, r)
+  endfor
+  let v = tr(eval(join(a, '-')), '2', '1')
+  let i = 1
+  let r = 0
+  for n in reverse(split(v, '\zs'))
+    if n == 1
+      let r += i
+    endif
+    let i = i * 2
+  endfor
+  return r
+endfunction
+
+function! s:and(...)
+  let a = []
+  for v in a:000
+    let r = ""
+    while v > 0
+      let i = v % 2
+      let r = i . r
+      let v = v / 2
+    endwhile
+    call add(a, r)
+  endfor
+  let v = tr(eval(join(a, '-')), '21', '10')
+  let i = 1
+  let r = 0
+  for n in reverse(split(v, '\zs'))
+    if n == 1
+      let r += i
+    endif
+    let i = i * 2
+  endfor
+  return r
+endfunction
+
 function! s:add_globals(env)
   "env.update(vars(math)) # sin, sqrt, ...
   let env = a:env
@@ -108,6 +154,10 @@ function! s:add_globals(env)
 \ 'atan':    env.make_op('atan(s:deref(a:1))'),
 \ 'atan2':   env.make_op('atan2(s:deref(a:1), s:deref(a:2))'),
 \ 'mod':     env.make_op('s:deref(a:1) % s:deref(a:2)'),
+\ 'floor':   env.make_op('floor(s:deref(a:1))'),
+\ 'trunc':   env.make_op('trunc(s:deref(a:1))'),
+\ 'and':     env.make_op('call("s:and", a:000)'),
+\ 'or':      env.make_op('call("s:or", a:000)'),
 \ '#t':      !0,
 \ '#f':      0,
 \ 'nil':     0,
