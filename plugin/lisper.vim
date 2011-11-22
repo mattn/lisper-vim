@@ -2,7 +2,7 @@
 " File: lisper.vim
 " Author: Yasuhiro Matsumoto <mattn.jp@gmail.com>
 " Last Change: 22-Nov-2011.
-" Version: 0.01
+" Version: 0.02
 "
 command! LisperRepl call lisper#repl()
 command! LisperEvalLine echo lisper#eval(getline('.'))
