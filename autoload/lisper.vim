@@ -546,4 +546,11 @@ function! lisper#repl()
   endtry
 endfunction
 
+function! lisper#bang(s)
+  let bang = index(readfile(a:s), "LisperBang")
+  if bang != -1
+    call lisper#eval(join(getline(bang+2, '$'), "\n"))
+  endif
+endfunction
+
 " vim:set et:
