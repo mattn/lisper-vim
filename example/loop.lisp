@@ -9,7 +9,7 @@
       sleep 1
     " i)
   )
-  (vim-echo "bomb!")
+  (display "bomb!")(newline)
 )
 
 ;; vim: set ft=lisp:

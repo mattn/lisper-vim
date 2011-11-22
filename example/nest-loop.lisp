@@ -2,10 +2,10 @@
   (set! i 10)
   (loop
     (if (= i 0) (return i))
-    (vim-echo "i" i)
+    (print "i" i)
     (set! j 10)
     (loop
-      (vim-echo "j" j)
+      (print "j" j)
       (if (= j 0) (return j))
       (set! j (- j 1))
     )

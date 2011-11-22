@@ -1,7 +1,7 @@
 "=============================================================================
 " lisper.vim
 " Author: Yasuhiro Matsumoto <mattn.jp@gmail.com>
-" Last Change: 21-Nov-2011.
+" Last Change: 22-Nov-2011.
 "
 " Based On: http://norvig.com/lis.py
 
@@ -13,6 +13,9 @@ function! s:env.new(...)
   let outer  = a:0 > 2 ? a:000[2] : 0
   let f = 0
   while f < len(params)
+    if exists("l:p")
+      unlet p
+    endif
     let p = params[f]
     let m = s:deref(p)
     let self.bind[m] = args[f]
@@ -66,6 +69,11 @@ endfunction
 
 function! s:echo(...)
   echo join(a:000, ' ')
+  return a:000
+endfunction
+
+function! s:echon(...)
+  echon join(a:000, ' ')
   return a:000
 endfunction
 
@@ -158,6 +166,8 @@ function! s:add_globals(env)
 \ 'trunc':   env.make_op('trunc(s:deref(a:1))'),
 \ 'and':     env.make_op('call("s:and", a:000)'),
 \ 'or':      env.make_op('call("s:or", a:000)'),
+\ '1'.'+':   env.make_op('a:1+1'),
+\ '1'.'-':   env.make_op('a:1-1'),
 \ '#t':      !0,
 \ '#f':      0,
 \ 'nil':     0,
@@ -382,7 +392,9 @@ function! s:lisp._eval(...) dict abort
       let oldloop = get(env, '_lisper_loop_', 0)
       while 1
         for exp in x[1:]
-          silent! unlet V
+          if exists("l:V")
+            unlet V
+          endif
           let env['_lisper_loop_'] = 1
           let V = self._eval(exp, env)
           if env['_lisper_loop_'] == 0
@@ -392,20 +404,40 @@ function! s:lisp._eval(...) dict abort
           unlet exp
         endfor
       endwhile
+    elseif m == 'defun' " (defun func (var*) exp)
+      let [_, proc, vars; rest] = x
+      unlet m
+      let m = s:deref(proc)
+      let env.bind[m] = {'_lisper_symbol_': env.make_op('__[0]._eval(__[1], s:env.new(__[2], a:000, __[3]))', self, ["begin"]+rest, vars, env)}
+      return env.bind[m]
     elseif m == 'lambda' " (lambda (var*) exp)
-      let [_, vars, exp; rest] = x
-      return {'_lisper_symbol_': env.make_op('__[0]._eval(__[1], s:env.new(__[2], a:000, __[3]))', self, exp, vars, env)}
+      let [_, vars; rest] = x
+      return {'_lisper_symbol_': env.make_op('__[0]._eval(__[1], s:env.new(__[2], a:000, __[3]))', self, ["begin"]+rest, vars, env)}
     elseif m == 'begin' " (begin exp*)
       let V = 0
       for exp in x[1:]
-        silent! unlet VV
+        if exists("l:VV")
+          unlet VV
+        endif
         let VV = self._eval(exp, env)
-        silent! unlet V
+        if exists("l:V")
+          unlet V
+        endif
         let V = VV
         unlet exp
       endfor
       return V
-    elseif m == 'vim-echo'
+    elseif m == 'display'
+      let exps = []
+      for exp in x[1:]
+        call add(exps, self._eval(exp, env))
+        unlet exp
+      endfor
+      call call('s:echon', exps)
+      return ''
+    elseif m == 'newline'
+      return self._eval(["display", "\n"] + x[1:], env)
+    elseif m == 'vim-echo' || m == 'print'
       let exps = []
       for exp in x[1:]
         call add(exps, self._eval(exp, env))
