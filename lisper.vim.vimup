@@ -1,0 +1,53 @@
+script_name: Lisper.vim
+script_type: utility
+script_package: lisper-vim.zip
+script_version: '0.01'
+required_vim_version: '7.0'
+summary: Yet Another Lisp Engine
+
+detailed_description: |
+
+  This vim plugin provide lisp environments for vimmers.
+
+  Source Repository.
+  ref: http://github.com/mattn/lisper-vim
+  
+  LisperEvalBuffer: evaluate buffer as lisp.
+  LisperRepl: start repl in vim command-line.
+
+  You can call lisper#eval() to evaluate expression.
+
+    :echo lisper#eval('(+ 1 2 3 4 5)')
+    15
+
+  Or, make instance permanently.
+  
+    :let engine = lisper#engine()
+    :echo engine.eval("(+ 1 2 3 4 5)")
+    15
+    :echo engine.eval("(+ 1 (length (quote abc))")
+    4
+
+  The instance of lisp machine have global environment for the variable.
+
+install_details: |
+
+  # cd ~/.vim
+  # unzip lisper-vim.zip
+
+  or if you install pathogen.vim:
+
+  # cd ~/.vim/bundle # or make directory
+  # unzip /path/to/lisper-vim.zip
+
+  if you get sources from repository:
+
+  # cd ~/.vim/bundle # or make directory
+  # git clone http://github.com/mattn/lisper-vim.git
+
+versions:
+- '0.01': |
+   Initial upload
+
+# __END__
+# vim: filetype=yaml
