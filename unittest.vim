@@ -82,6 +82,7 @@ try
   call s:test_equal("(atan2 0.8 0.9)", atan2(0.8, 0.9))
   call s:test_equal("(set! count 0)", "count")
   call s:test_equal("(loop (set! count (+ count 1)) (if (= 10 count) (return count)))", "10")
+  call s:test_equal("((lambda var (+ (car var) (+ (car (cdr var)) 3))) 5 6)", "8")
   echohl Title | echo "SUCCEEDED" | echohl None
 catch
   echohl WarningMsg | echo "FAILED: " v:exception | echohl None
