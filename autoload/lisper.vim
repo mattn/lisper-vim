@@ -1,7 +1,7 @@
 "=============================================================================
 " lisper.vim
 " Author: Yasuhiro Matsumoto <mattn.jp@gmail.com>
-" Last Change: 22-Nov-2011.
+" Last Change: 28-Nov-2011.
 "
 " Based On: http://norvig.com/lis.py
 
@@ -352,16 +352,13 @@ function! s:lisp._eval(...) dict abort
     if len(x) == 0
       return
     endif
-    while type(x[0]) == 3 && len(x[0])
-      let t = x[0]
-      unlet x
-      let x = t
-      unlet t
-    endwhile
-    if len(x[0]) == 0
-      return 0
+    if type(x) == 3
+      let m = s:deref(x[0])
     endif
-    let m = s:deref(x[0])
+    if type(m) != 1
+      unlet m
+      let m = ''
+    endif
     if m == 'quote' " (quote exp)
       let [_, exp; rest] = x
       return exp
@@ -408,11 +405,13 @@ function! s:lisp._eval(...) dict abort
       let [_, proc, vars; rest] = x
       unlet m
       let m = s:deref(proc)
-      let env.bind[m] = {'_lisper_symbol_': env.make_op('__[0]._eval(__[1], s:env.new(__[2], a:000, __[3]))', self, ["begin"]+rest, vars, env)}
+      let lvars = type(vars) == 3 ? vars : [vars]
+      let env.bind[m] = {'_lisper_symbol_': env.make_op('__[0]._eval(__[1], s:env.new(__[2], a:000, __[3]))', self, ["begin"]+rest, lvars, env)}
       return env.bind[m]
     elseif m == 'lambda' " (lambda (var*) exp)
       let [_, vars; rest] = x
-      return {'_lisper_symbol_': env.make_op('__[0]._eval(__[1], s:env.new(__[2], a:000, __[3]))', self, ["begin"]+rest, vars, env)}
+      let lvars = type(vars) == 3 ? vars : [vars]
+      return {'_lisper_symbol_': env.make_op('__[0]._eval(__[1], s:env.new(__[2], a:000, __[3]))', self, ["begin"]+rest, lvars, env)}
     elseif m == 'begin' " (begin exp*)
       let V = 0
       for exp in x[1:]
