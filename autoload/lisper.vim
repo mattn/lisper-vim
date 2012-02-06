@@ -1,7 +1,7 @@
 "=============================================================================
 " lisper.vim
 " Author: Yasuhiro Matsumoto <mattn.jp@gmail.com>
-" Last Change: 02-Feb-2012.
+" Last Change: 06-Feb-2012.
 "
 " Based On: http://norvig.com/lis.py
 
@@ -519,8 +519,9 @@ function! lisper#repl()
   try
     while 1
       let prompt = "lisp".repeat(">", nest+1)." "
-      let exp .= input(prompt)
-      echo "\r".prompt.exp."\n"
+      let inp = input(prompt)
+      let exp .= inp
+      echo "\r".prompt.inp."\n"
       if len(exp) > 0
         let tokens = []
         try
