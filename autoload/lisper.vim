@@ -570,6 +570,8 @@ function! lisper#repl()
           else
             let nest = s:can(tokens)
           endif
+        finally
+          if exists('ret') | unlet ret | endif
         endtry
       endif
     endwhile
