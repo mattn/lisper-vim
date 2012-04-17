@@ -577,10 +577,14 @@ function! lisper#repl()
 endfunction
 
 function! lisper#bang(s)
-  let bang = index(readfile(a:s), "LisperBang")
-  if bang != -1
-    call lisper#eval(join(getline(bang+2, '$'), "\n"))
-  endif
+  try
+    let bang = index(readfile(a:s), "LisperBang")
+    if bang != -1
+      call lisper#eval(join(getline(bang+2, '$'), "\n"))
+    endif
+  catch
+    echohl WarningMsg | echo s:cut_vimprefix(v:exception) | echohl None
+  endtry
 endfunction
 
 " vim:set et:
