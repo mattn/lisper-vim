@@ -260,12 +260,15 @@ function! s:read_from(ctx)
       throw 'unexpected EOF while reading'
     endif
     let a:ctx.tokens = a:ctx.tokens[1:]
-    "if len(l) > 0 && len(a:ctx.tokens) > 0
-    "  let l += s:read_from(a:ctx)
-    "endif
     return l
   elseif ')' == token
     throw 'unexpected )'
+  elseif token =~ "^'"
+    if len(token) > 1
+      return s:atom(token[1:])
+    else
+      return ['quote'] + [s:read_from(a:ctx)]
+    endif
   else
     return s:atom(token)
   endif
