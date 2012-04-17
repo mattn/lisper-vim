@@ -341,32 +341,32 @@ function! s:lisp.dispose() dict
 endfunction
 
 function! s:lisp._eval(...) dict abort
-  let x = a:1
+  let X = a:1
   let env = a:0 > 1 ? a:2 : self.global_env
-  if type(x) == 4 " symbol
-    let s = s:deref(x)
+  if type(X) == 4 " symbol
+    let s = s:deref(X)
     if type(s) == 4
       return s
     endif
     return env.find(s)[s]
-  elseif type(x) != 3 " constant
-    return x
+  elseif type(X) != 3 " constant
+    return X
   else
-    if len(x) == 0
+    if len(X) == 0
       return
     endif
-    if type(x) == 3
-      let m = s:deref(x[0])
+    if type(X) == 3
+      let m = s:deref(X[0])
     endif
     if type(m) != 1
       unlet m
       let m = ''
     endif
     if m == 'quote' " (quote exp)
-      let [_, exp; rest] = x
+      let [_, exp; rest] = X
       return exp
     elseif m == 'if' " (if test conseq alt)
-      let [_, test, conseq; rest] = x
+      let [_, test, conseq; rest] = X
       let alt = len(rest) > 0 ? rest[0] : 0
       if self._eval(test, env)
         return self._eval(conseq, env)
@@ -374,24 +374,24 @@ function! s:lisp._eval(...) dict abort
         return self._eval(alt, env)
       endif
     elseif m == 'set!' " (set! var exp)
-      let [_, var, exp; rest] = x
+      let [_, var, exp; rest] = X
       let m = s:deref(var)
       let vars = env.find(m, 1)
       let vars[m] = self._eval(exp, env)
       return m
     elseif m == 'define' " (define var exp)
-      let [_, var, exp; rest] = x
+      let [_, var, exp; rest] = X
       unlet m
       let m = s:deref(var)
       let env.bind[m] = self._eval(exp, env)
       return env.bind[m]
     elseif m == 'return' " (return exp)
       let env['_lisper_loop_'] = 0
-      return len(x) > 1 ? self._eval(x[1], env) : 0
+      return len(X) > 1 ? self._eval(X[1], env) : 0
     elseif m == 'loop' " (loop exp*)
       let oldloop = get(env, '_lisper_loop_', 0)
       while 1
-        for exp in x[1:]
+        for exp in X[1:]
           if exists("l:V")
             unlet V
           endif
@@ -405,7 +405,7 @@ function! s:lisp._eval(...) dict abort
         endfor
       endwhile
     elseif m == 'defun' " (defun func (var*) exp)
-      let [_, proc, vars; rest] = x
+      let [_, proc, vars; rest] = X
       unlet m
       let m = s:deref(proc)
       let lvars = type(vars) == 3 ? vars : [vars]
@@ -417,8 +417,12 @@ function! s:lisp._eval(...) dict abort
         let env.bind[m] = {'_lisper_symbol_': env.make_op('__[0]._eval(__[1], s:env.new(__[2], a:000, __[3]))', self, ["begin"]+rest, lvars, env)}
       endif
       return env.bind[m]
+    elseif m == 'let' " (let (var*) exp)
+      let [_, vars; rest] = X
+      let [lhs, rhs] = vars[0]
+      return call(env.make_op('__[0]._eval(__[1], s:env.new(__[2], a:000, __[3]))', self, ["begin"]+vars[1:]+rest, [lhs], env), [rhs])
     elseif m == 'lambda' " (lambda (var*) exp)
-      let [_, vars; rest] = x
+      let [_, vars; rest] = X
       let lvars = type(vars) == 3 ? vars : [vars]
       let lvt = len(lvars) > 0 ? s:deref(lvars[0]) : ''
       if len(lvars) == 2 && type(lvt) == 1 && lvt == '&rest'
@@ -428,7 +432,7 @@ function! s:lisp._eval(...) dict abort
         return {'_lisper_symbol_': env.make_op('__[0]._eval(__[1], s:env.new(__[2], a:000, __[3]))', self, ["begin"]+rest, lvars, env)}
       endif
     elseif m == 'apply' " (apply exp exp*)
-      for exp in self._eval(x[2], env)
+      for exp in self._eval(X[2], env)
         if exists("l:VV")
           unlet VV
         endif
@@ -436,14 +440,14 @@ function! s:lisp._eval(...) dict abort
         if !exists("l:V")
           let V = VV
         else
-          let V = call(self._eval(x[1]), [V, VV])
+          let V = call(self._eval(X[1]), [V, VV])
         endif
         unlet exp
       endfor
       return V
     elseif m == 'begin' " (begin exp*)
       let V = 0
-      for exp in x[1:]
+      for exp in X[1:]
         if exists("l:VV")
           unlet VV
         endif
@@ -457,17 +461,17 @@ function! s:lisp._eval(...) dict abort
       return V
     elseif m == 'display'
       let exps = []
-      for exp in x[1:]
+      for exp in X[1:]
         call add(exps, self._eval(exp, env))
         unlet exp
       endfor
       call call('s:echon', exps)
       return ''
     elseif m == 'newline'
-      return self._eval(["display", "\n"] + x[1:], env)
+      return self._eval(["display", "\n"] + X[1:], env)
     elseif m == 'vim-echo' || m == 'print'
       let exps = []
-      for exp in x[1:]
+      for exp in X[1:]
         call add(exps, self._eval(exp, env))
         unlet exp
       endfor
@@ -475,28 +479,28 @@ function! s:lisp._eval(...) dict abort
       return ''
     elseif m == 'vim-call'
       let exps = []
-      for exp in x[2:]
+      for exp in X[2:]
         call add(exps, self._eval(exp, env))
         unlet exp
       endfor
-      return call(s:deref(x[1]), exps)
+      return call(s:deref(X[1]), exps)
     elseif m == 'vim-eval'
       let exps = []
-      for exp in x[2:]
+      for exp in X[2:]
         call add(exps, self._eval(exp, env))
         unlet exp
       endfor
-      return call(env.make_op(s:deref(x[1])), exps)
+      return call(env.make_op(s:deref(X[1])), exps)
     elseif m == 'vim-do'
       let exps = []
-      for exp in x[2:]
+      for exp in X[2:]
         call add(exps, self._eval(exp, env))
         unlet exp
       endfor
-      return call(env.make_do(s:deref(x[1])), exps)
+      return call(env.make_do(s:deref(X[1])), exps)
     else " (proc exp*)
       let exps = []
-      for exp in x
+      for exp in X
         call add(exps, self._eval(exp, env))
         unlet exp
       endfor
@@ -531,8 +535,8 @@ function! lisper#eval(exp)
   let engine = lisper#engine()
   try
     return engine.eval(a:exp)
-  catch /.../
-    throw s:cut_vimprefix(v:exception)
+  "catch /.../
+  "  throw s:cut_vimprefix(v:exception)
   finally
     call engine.dispose()
     unlet engine
