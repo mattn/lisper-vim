@@ -6,8 +6,8 @@
 "
 command! LisperRepl call lisper#repl()
 command! LisperEvalLine echo lisper#eval(getline('.'))
-command! -range=% LisperEvalBuffer echo lisper#eval('(begin '.join(getline(<line1>, <line2>), "\n").')')
-command! -range=% LisperEvalBufferWithoutOutput call lisper#eval('(begin '.join(getline(<line1>, <line2>), "\n").')')
+command! -range=% LisperEvalBuffer echo lisper#eval("(begin\n".join(getline(<line1>, <line2>), "\n")."\n)")
+command! -range=% LisperEvalBufferWithoutOutput call lisper#eval("(begin\n".join(getline(<line1>, <line2>), "\n")."\n)")
 command! LisperBang call lisper#bang(expand('<sfile>'))|finish
 
 " vim:set et:

@@ -417,7 +417,13 @@ function! s:lisp._eval(...) dict abort
     elseif m == 'lambda' " (lambda (var*) exp)
       let [_, vars; rest] = x
       let lvars = type(vars) == 3 ? vars : [vars]
-      return {'_lisper_symbol_': env.make_op('__[0]._eval(__[1], s:env.new(__[2], a:000, __[3]))', self, ["begin"]+rest, [lvars], env)}
+      let lvt = len(lvars) > 0 ? s:deref(lvars[0]) : ''
+      if len(lvars) == 2 && type(lvt) == 1 && lvt == '&rest'
+        let lvars = lvars[1:]
+        return {'_lisper_symbol_': env.make_op('__[0]._eval(__[1], s:env.new(__[2], [a:000], __[3]))', self, ["begin"]+rest, lvars, env)}
+      else
+        return {'_lisper_symbol_': env.make_op('__[0]._eval(__[1], s:env.new(__[2], a:000, __[3]))', self, ["begin"]+rest, lvars, env)}
+      endif
     elseif m == 'apply' " (apply exp exp*)
       for exp in self._eval(x[2], env)
         if exists("l:VV")
