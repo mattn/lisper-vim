@@ -535,8 +535,8 @@ function! lisper#eval(exp)
   let engine = lisper#engine()
   try
     return engine.eval(a:exp)
-  "catch /.../
-  "  throw s:cut_vimprefix(v:exception)
+  catch /.../
+    throw s:cut_vimprefix(v:exception)
   finally
     call engine.dispose()
     unlet engine
