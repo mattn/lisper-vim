@@ -1,8 +1,8 @@
 "=============================================================================
 " File: lisper.vim
 " Author: Yasuhiro Matsumoto <mattn.jp@gmail.com>
-" Last Change: 17-Apr-2012.
-" Version: 0.02
+" Last Change: 02-May-2012.
+" Version: 0.03
 "
 command! LisperRepl call lisper#repl()
 command! LisperEvalLine echo lisper#eval(getline('.'))
