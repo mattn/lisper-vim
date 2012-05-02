@@ -8,4 +8,4 @@ lisper-vim.zip: remove-zip
 	zip -r lisper-vim.zip autoload plugin doc example
 
 release: lisper-vim.zip
-	vimup update-script lisper-vim
+	vimup update-script lisper.vim
