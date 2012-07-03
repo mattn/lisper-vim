@@ -1,5 +1,5 @@
 set nomore
-LisperBang
+LisperVimBang
 
 (begin
   (set! i 0)

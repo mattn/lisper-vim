@@ -1,7 +1,7 @@
 "=============================================================================
 " lisper.vim
 " Author: Yasuhiro Matsumoto <mattn.jp@gmail.com>
-" Last Change: 17-Apr-2012.
+" Last Change: 03-Jul-2012.
 "
 " Based On: http://norvig.com/lis.py
 
@@ -584,7 +584,7 @@ endfunction
 
 function! lisper#bang(s)
   try
-    let bang = index(readfile(a:s), "LisperBang")
+    let bang = index(readfile(a:s), "LisperVimBang")
     if bang != -1
       call lisper#eval(join(getline(bang+2, '$'), "\n"))
     endif
