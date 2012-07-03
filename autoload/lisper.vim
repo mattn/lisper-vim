@@ -510,7 +510,13 @@ function! s:lisp._eval(...) dict abort
 endfunction
 
 function! s:lisp.eval(exp) dict
-  return lisper#stringer(self._eval(s:parse(a:exp)))
+  try
+    let old_maxfuncdepth = &maxfuncdepth
+    set maxfuncdepth=2000
+    return lisper#stringer(self._eval(s:parse(a:exp)))
+  finally
+    let &maxfuncdepth = old_maxfuncdepth
+  endtry
 endfunction
 
 function! s:lisp.evalv(exp) dict
