@@ -1,7 +1,7 @@
 "=============================================================================
 " lisper.vim
 " Author: Yasuhiro Matsumoto <mattn.jp@gmail.com>
-" Last Change: 03-Jul-2012.
+" Last Change: 06-Jul-2012.
 "
 " Based On: http://norvig.com/lis.py
 
@@ -574,6 +574,7 @@ function! lisper#repl()
             let exp = ''
             echohl WarningMsg | echo s:cut_vimprefix(v:exception) | echohl None
           else
+            let exp .= ' '
             let nest = s:can(tokens)
           endif
         finally
