@@ -1,7 +1,7 @@
 "=============================================================================
 " lisper.vim
 " Author: Yasuhiro Matsumoto <mattn.jp@gmail.com>
-" Last Change: 06-Jul-2012.
+" Last Change: 21-Oct-2012.
 "
 " Based On: http://norvig.com/lis.py
 
@@ -556,6 +556,7 @@ function! lisper#repl()
   let exp = ''
   let nest = 0
   try
+    call repl.eval('(defun exit () (vim-do "throw ''exit''"))')
     while 1
       let prompt = "lisp".repeat(">", nest+1)." "
       let inp = input(prompt)
@@ -570,7 +571,9 @@ function! lisper#repl()
           let exp = ''
           let nest = 0
         catch /.../
-          if v:exception != 'unexpected EOF while reading'
+          if v:exception == 'exit'
+            break
+          elseif v:exception != 'unexpected EOF while reading'
             let exp = ''
             echohl WarningMsg | echo s:cut_vimprefix(v:exception) | echohl None
           else
